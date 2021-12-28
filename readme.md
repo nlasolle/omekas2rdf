@@ -1,12 +1,12 @@
 # General purpose
-This python script has been created for the daily export of an Omeka S database to an RDF database (Turtle syntax).
+This Python script has been created for the daily export of an Omeka S database to an RDF database (Turtle syntax).
 
 # Details about the Omeka S installation
 Omeka S is a CMS (Content Management System) dedicated to the editing and the publishing of collections.
 It allows to create elements and publish them on a website based on the use of blocks and modules. 
 Is is particularly adapted for cultural heritage collections (museums, archive places, libraries, etc).
 
-It is currently in use for a project dedicated to Henri Poincaré (1854-1912), famous French man of science, managed bythe Archives Henri-Poincaré laboratory.
+It is currently in use for a project dedicated to Henri Poincaré (1854-1912), famous French man of science, managed by the Archives Henri-Poincaré laboratory.
 The website is available at http://henripoincare.fr.
 
 # Details about the script
