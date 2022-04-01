@@ -13,7 +13,7 @@ COLLECTIONS = "item_sets"
 #Files management
 MAX_DAYS = 7 #Number of days to keep backup files (.log and .ttl files)
 FILES_REPOSITORY = "/var/tomcat/base_rdf/"
-BACKUP_REPOSITORY = "/opt/backup/database/rdf_db_hp/"
+BACKUP_REPOSITORY = "/opt/backup/rdf_db_hp/"
 LOGS_REPOSITORY = "/var/tomcat/logs/"
 ITEMS_FILE = "items.ttl"
 MEDIAS_FILE = "medias.ttl"
