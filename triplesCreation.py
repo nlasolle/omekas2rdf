@@ -9,16 +9,12 @@ from constants import *
 def initializeRDFdatabase():
 	logging.info("Adding namespaces to RDF database")
 
+	#Initializes the RDF graph
 	graph = Graph()
 
-	#Add namespaces
-	graph.bind("ahpo", AHPO)
-	graph.bind("o", O)
-	graph.bind("bio", BIO)
-	graph.bind("dcterms", DCTERMS)
-	graph.bind("rel", REL)
-	graph.bind("o-cnt", O_CNT)
-	graph.bind("hp", HP)
+	#Add defined namespaces to the graph
+	for key, value in namespaces.items():
+		graph.bind(key, value)
 
 	return graph
 
@@ -44,19 +40,6 @@ def saveGraphToFile(graph, category, format):
 #Add the given items to the RDF database by creating appropriate triples
 def createItemsTriples(items, graph):
 
-	graph.add( (AHPO.sentBy, RDFS.subPropertyOf, HP.correspondant) );
-	graph.add( (AHPO.sentTo, RDFS.subPropertyOf, HP.correspondant) );
-	graph.add( (AHPO.DestinationAddress, HP.nicename, Literal("adresse")) );
-	graph.add( (AHPO.Person, HP.nicename, Literal("individu")) );
-	graph.add( (AHPO.Article, HP.nicename, Literal("article")) );
-	graph.add( (AHPO.BookChapter, HP.nicename, Literal("chapitre")) );
-	graph.add( (AHPO.Report, HP.nicename, Literal("rapport")) );
-	graph.add( (AHPO.Book, HP.nicename, Literal("livre")) );
-	graph.add( (AHPO.Thesis, HP.nicename, Literal("these")) );
-	graph.add( (AHPO.Journal, HP.nicename, Literal("journal")) );
-	graph.add( (AHPO.Issue, HP.nicename, Literal("publication")) );
-	graph.add( (AHPO.Letter, HP.nicename, Literal("lettre")) );
-
 	for item in items:
 		try:
 			#The uri
@@ -69,49 +52,42 @@ def createItemsTriples(items, graph):
 			if "o:item_set" in item:
 				for item_set in item["o:item_set"]:
 					graph.add( (uri, O.item_set, URIRef(item_set["@id"].strip())) )
+		
 
-			if "ahpo:writingDate" in item:
-				for date in item["ahpo:writingDate"]:
-					fullDate = date["@value"];
-					graph.add( (uri, HP.created, Literal(fullDate) ))
-					graph.add( (uri, HP.year, Literal(fullDate[:4], datatype=XSD.integer)) )
-
-	
-			graph.add( (uri, HP.link, Literal("http://henripoincare.fr/s/correspondance/item/" + str(item["o:id"]))) )
-			#Every item is an omeka item
-			#graph.add( (uri, RDF.type, O.Item) )
-
-			#The differents classes
-			for type in item["@type"]:
-				#Only save ahpo class
-				if("ahpo" in type):
-					object = AHPO + type[5:]
-					graph.add( (uri, RDF.type, URIRef(object)) )
-
-			#All other items are included
+			#All properties
 			for key in item:
-				if(isinstance(item[key], list)):
+				#2 conditions are required to save only required property and values
+				#The first thing to check is that the format of the key is "prefix:value" (ex. dcterms:subject)
+				#The second thing is to avoid saving Omeka S related content (ex. "o:resource_class")
+				#if only retrieve (isinstance(item[key], list) and 
+				if ":" in key and not key.startswith("o:"):
 					for element in item[key]: 
-						if("ahpo" in key):
-							predicate = URIRef(AHPO + key[5:]) # RDFlib method needs the full URI to create the triple (prefixes given as keys of json resources)
-						elif("rel" in key):
-							predicate = URIRef(REL + key[4:])
-						elif("bio" in key):
-							predicate = URIRef(BIO + key[4:])
-						elif("dcterms" in key):
-							predicate = URIRef(DCTERMS + key[8:])
-						elif("hp" in key):
-							predicate = URIRef(DCTERMS + key[3:])
-						elif("o" in key):
-							predicate = URIRef(O + key[2:])
+						
+						#Omeka returns predicate under the form "prefix:value" (ex. dcterms:subject)
+						#But  RDFlib method needs the full URI to create the RDF node (ex. http://purl.org/dc/terms/subject )
+						#which is part of a triple (prefixes given as keys of json resources)
 
-						if "@value" in element:
-							graph.add( (uri, predicate, Literal(element["@value"])) )
-
-						if "@id" in element:
-							graph.add( (uri, predicate, URIRef(element["@id"].strip())) )
-
-
+						prefix = key[0:key.index(":")]
+						if len(prefix) > 0:
+							predicate = URIRef(namespaces[prefix] + key[len(prefix) + 1:])
+							if "@value" in element:
+								graph.add( (uri, predicate, Literal(element["@value"])) )
+							
+							if "@id" in element:
+								if element["@id"].strip().startswith("http"):
+									graph.add( (uri, predicate, URIRef(element["@id"].strip())) )
+								else:
+									graph.add( (uri, predicate, Literal(element["@id"].strip())) )
+					
+							
+			# We want to save the type associated with items,
+			# but not saving that every item is an Omeka item (o:item)
+			for type in item["@type"]:
+				if ":" in type and not type.startswith("o:"):
+					prefix = type[0:type.index(":")]
+					if len(prefix) > 0:
+						object = URIRef(namespaces[prefix] + type[len(prefix) + 1:])
+						graph.add( (uri, RDF.type, object) )
 
 		except: 
 			logging.exception("An error occured for item with id: " + str(item["@id"]))
@@ -143,13 +119,11 @@ def createMediasTriples(medias, graph):
 				if "o:item" in media:
 					graph.add( (uri, O.item, URIRef(media["o:item"]["@id"])))
 
-				if "ahpo:editedBy" in media:
-					graph.add( (uri, AHPO.editedBy, Literal(media["ahpo:editedBy"])) )
 
 			except: 
 				logging.exception("An error occured for media with id: " + str(media["@id"]))
 				logging.exception("Exception message:", exc_info=True)
-				continue #Go to next item
+				continue #Go to next media
 
 
 def createCollectionsTriples(collections, graph):
@@ -163,4 +137,4 @@ def createCollectionsTriples(collections, graph):
 			except: 
 				logging.exception("An error occured for set with id: " + str(set["@id"]))
 				logging.exception("Exception message:", exc_info=True)
-				continue #Go to next item
+				continue #Go to next collection

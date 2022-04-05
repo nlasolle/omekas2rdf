@@ -21,7 +21,7 @@ def alterFilesPermissions():
         for file in f:
             try:
                 filePath = os.path.join(r, file)
-                os.chmod(filePath, 777)
+                os.chmod(filePath, 0o644)
             except:
                 logging.exception('Permission update execpetion: ',
                                   exc_info=True)
@@ -39,6 +39,7 @@ def createBackup():
         archiveFile = BACKUP_REPOSITORY + yesterday.strftime('%Y%m%d') \
             + '_base_rdf' + '.zip'
 
+       
         # Add all RDF files to the archive (see https://docs.python.org/2.7/library/zipfile.html for documentation)
 
         with ZipFile(archiveFile, 'w') as zipObj:
@@ -56,7 +57,7 @@ def createBackup():
 
                     zipObj.write(filePath)
 
-        os.chmod(archiveFile, 777)
+        os.chmod(archiveFile, 0o644)
     else:
         logging.exception('The backup repository with path "'
                           + BACKUP_REPOSITORY + '" has not been found.')
@@ -120,7 +121,7 @@ def configureLogging():
 
         # Last log file
 
-        os.chmod(logfile, 777)
+        os.chmod(logfile, 0o644)
     else:
 
         logging.exception('The logs repository with path "'
@@ -178,10 +179,9 @@ def saveResources(category):
     saveGraphToFile(graph, category, FORMAT)
 
 
-# Main program
+#### Main program ####
 
 # Add backup archive and remove old files
-
 createBackup()
 cleanRepository()
 
@@ -190,6 +190,8 @@ cleanRepository()
 configureLogging()
 
 logging.info('RDF database update initialization.')
+
+logging.info("List of defined namespaces : ")
 
 logging.info('Starting items creation.')
 saveResources(ITEMS)
