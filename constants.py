@@ -12,12 +12,11 @@ VOCABULARIES = "vocabularies"
 
 #Files management
 MAX_DAYS = 7 #Number of days to keep backup files (.log and .ttl files)
-#FILES_REPOSITORY = "/var/lib/rdf_db_hp/"
-#BACKUP_REPOSITORY = "/opt/backup/rdf_db_hp/"
-#LOGS_REPOSITORY = "/var/lib/rdf_db_hp/logs/"
-FILES_REPOSITORY = "./rdf_db_hp/"
-BACKUP_REPOSITORY = "./rdf_db_hp/"
-LOGS_REPOSITORY = "./logs/"
+
+FILES_REPOSITORY = "/var/lib/rdf_db_hp/"
+BACKUP_REPOSITORY = "/opt/backup/rdf_db_hp/"
+LOGS_REPOSITORY = "/var/lib/rdf_db_hp/logs/"
+
 ITEMS_FILE = "items.ttl"
 MEDIAS_FILE = "medias.ttl"
 COLLECTIONS_FILE = "collections.ttl"
