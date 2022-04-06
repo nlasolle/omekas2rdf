@@ -129,9 +129,21 @@ def configureLogging():
         sys.exit("Quitting script...please create the logs repository first.")
 
 
+#Retrieve Omeka S vocabularies and save prefixes with associated URI in the namespaces object
+def saveNamespaces():
+    logging.info('---- Calling ' + API_PATH + VOCABULARIES + " ----")
+    response = requests.get(API_PATH + VOCABULARIES)
+
+    if response:
+        vocabularies = response.json()
+
+        if len(vocabularies) > 0:
+            for vocab in vocabularies:
+                namespaces[vocab["o:prefix"]] = vocab["o:namespace_uri"]
+                logging.info("Add namespace " + vocab["o:namespace_uri"] + " with prefix " + vocab["o:prefix"])
+
 # Get Omeka S resource by making REST API calls
 # Save items, medias or collections to RDF base (several files)
-
 def saveResources(category):
 
     graph = initializeRDFdatabase()
@@ -145,7 +157,7 @@ def saveResources(category):
         # Python request package is used to make the HTTP call
         # See https://realpython.com/python-requests/ for examples
 
-        logging.info('Calling ' + API_PATH + category)
+        logging.info('---- Calling ' + API_PATH + category + " ----")
 
         stringParams = {'page': page, 'per_page': RESULTS_PER_PAGE}
         response = requests.get(API_PATH + category, stringParams)
@@ -191,7 +203,7 @@ configureLogging()
 
 logging.info('RDF database update initialization.')
 
-logging.info("List of defined namespaces : ")
+saveNamespaces()
 
 logging.info('Starting items creation.')
 saveResources(ITEMS)

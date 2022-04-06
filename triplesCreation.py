@@ -7,7 +7,7 @@ from constants import *
 #RDFLib library is used to create the RDF document (in Turtle syntax)
 #Go here to find more details: https://rdflib.readthedocs.io/en/stable/gettingstarted.html
 def initializeRDFdatabase():
-	logging.info("Adding namespaces to RDF database")
+	logging.info("Adding namespaces to the RDF graph")
 
 	#Initializes the RDF graph
 	graph = Graph()
