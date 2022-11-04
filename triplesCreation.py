@@ -21,7 +21,7 @@ def initializeRDFdatabase():
 #Save an RDF graph to a file of one of the specified format (RDF/XML, turtle, etc.)
 def saveGraphToFile(graph, category, format):
 
-	#Get the name of the file to 
+	#Get the name of the file to
 	if category == ITEMS:
 		file = FILES_REPOSITORY + ITEMS_FILE
 	elif category == MEDIAS:
@@ -33,7 +33,7 @@ def saveGraphToFile(graph, category, format):
 
 	try:
 		graph.serialize(destination = file, format = format)
-	except: 
+	except:
 		logging.exception("An error occured during the creation of the RDF file: " + file)
 		logging.exception("Exception message:", exc_info=True)
 
@@ -52,34 +52,40 @@ def createItemsTriples(items, graph):
 			if "o:item_set" in item:
 				for item_set in item["o:item_set"]:
 					graph.add( (uri, O.item_set, URIRef(item_set["@id"].strip())) )
-		
 
 			#All properties
 			for key in item:
 				#2 conditions are required to save only required property and values
 				#The first thing to check is that the format of the key is "prefix:value" (ex. dcterms:subject)
-				#The second thing is to avoid saving Omeka S related content (ex. "o:resource_class")
-				#if only retrieve (isinstance(item[key], list) and 
-				if ":" in key and not key.startswith("o:"):
-					for element in item[key]: 
-						
+				#The second thing is to avoid saving Omeka S related content (ex. "o:resource_class"
+				# or "o-module-mapping:marker")
+				#if only retrieve (isinstance(item[key], list) and
+				#in other cases a Warning strange prefix is logged
+				if ":" in key and not (key.startswith("o:") or key.startswith("o-module")):
+					prefix = key[0:key.index(":")]
+					if prefix not in namespaces:
+						# a non declared namespace,
+						# often an omeka module property (ex: "o-module-mapping:" for map module)
+						# go to next key
+						logging.info(f"prefix {prefix} not found for item {item}")
+						continue
+					for element in item[key]:
 						#Omeka returns predicate under the form "prefix:value" (ex. dcterms:subject)
 						#But  RDFlib method needs the full URI to create the RDF node (ex. http://purl.org/dc/terms/subject )
 						#which is part of a triple (prefixes given as keys of json resources)
 
-						prefix = key[0:key.index(":")]
 						if len(prefix) > 0:
 							predicate = URIRef(namespaces[prefix] + key[len(prefix) + 1:])
 							if "@value" in element:
 								graph.add( (uri, predicate, Literal(element["@value"])) )
-							
+
 							if "@id" in element:
 								if element["@id"].strip().startswith("http"):
 									graph.add( (uri, predicate, URIRef(element["@id"].strip())) )
 								else:
 									graph.add( (uri, predicate, Literal(element["@id"].strip())) )
-					
-							
+
+
 			# We want to save the type associated with items,
 			# but not saving that every item is an Omeka item (o:item)
 			for type in item["@type"]:
@@ -89,7 +95,7 @@ def createItemsTriples(items, graph):
 						object = URIRef(namespaces[prefix] + type[len(prefix) + 1:])
 						graph.add( (uri, RDF.type, object) )
 
-		except: 
+		except:
 			logging.exception("An error occured for item with id: " + str(item["@id"]))
 			logging.exception("Exception message:", exc_info=True)
 			continue #Go to next item
@@ -100,12 +106,12 @@ def createMediasTriples(medias, graph):
 				#The uri
 				uri = URIRef(media["@id"])
 
-				#The type 
+				#The type
 				if "o-cnt" in media["@type"]:
 					graph.add( (uri, RDF.type, URIRef(O_CNT + media["@type"][6:])))
 					if "o-cnt:chars" in media:
 						graph.add( (uri, O_CNT.chars, Literal(media["o-cnt:chars"])) )
-				else: 
+				else:
 					graph.add( (uri, RDF.type, O.Media) )
 
 				#The label
@@ -120,7 +126,7 @@ def createMediasTriples(medias, graph):
 					graph.add( (uri, O.item, URIRef(media["o:item"]["@id"])))
 
 
-			except: 
+			except:
 				logging.exception("An error occured for media with id: " + str(media["@id"]))
 				logging.exception("Exception message:", exc_info=True)
 				continue #Go to next media
@@ -134,7 +140,7 @@ def createCollectionsTriples(collections, graph):
 
 				#The label
 				graph.add( (uri, RDFS.label, Literal(set["o:title"])) )
-			except: 
+			except:
 				logging.exception("An error occured for set with id: " + str(set["@id"]))
 				logging.exception("Exception message:", exc_info=True)
 				continue #Go to next collection
