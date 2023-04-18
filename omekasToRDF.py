@@ -13,6 +13,8 @@ from triplesCreation import *
 from constants import *
 
 
+#TODO check trailing / in API_PATH
+
 def alterFilesPermissions():
 
     # RDF files
